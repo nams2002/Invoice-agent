@@ -19,7 +19,7 @@ class LLMHandler:
         # ──── OPENAI / PROXY SETUP ────────────────────────────────────────────────
         openai.api_key = settings.OPENAI_API_KEY
 
-        # optional single‐URL proxy
+        # If you set OPENAI_PROXY in settings, route through it via env-vars
         proxy = getattr(settings, "OPENAI_PROXY", None)
         if proxy:
             os.environ["HTTP_PROXY"] = proxy
@@ -30,11 +30,8 @@ class LLMHandler:
             model=settings.OPENAI_MODEL,
             temperature=settings.TEMPERATURE,
             model_kwargs={"max_tokens": settings.MAX_TOKENS},
-            openai_proxy=proxy,
         )
-        self.embeddings = OpenAIEmbeddings(
-            openai_api_key=settings.OPENAI_API_KEY
-        )
+        self.embeddings = OpenAIEmbeddings(openai_api_key=settings.OPENAI_API_KEY)
 
         # ──── PLACEHOLDERS ───────────────────────────────────────────────────────
         self.vectorstore: Optional[Chroma] = None
@@ -58,7 +55,6 @@ class LLMHandler:
 
         resp = self.llm([system, user])
         json_str = resp.strip()
-        # strip ```json … ``` if present
         if json_str.startswith("```json"):
             json_str = json_str[7:]
         if json_str.endswith("```"):
