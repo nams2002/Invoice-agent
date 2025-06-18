@@ -1,0 +1,24 @@
+[
+  {
+    "invoice_number": "INV#001",
+    "date": "2025-07-05",
+    "vendor_name": "Naman Nagi",
+    "vendor_address": "Yellow Apartments, lane no 2, Block C, Mandakini Vihar, S.Dhara Road, Dehradun, Uttarakhand 248001",
+    "customer_name": "CODEZERO2PI SOLUTIONS (OPC) PRIVATE LIMITED",
+    "customer_address": "Tower 1, Okaya Blue Silicon Business Park B -5 Noida Sector 62 Noid Uttar Pradesh -UP 201301.",
+    "items": [
+      {
+        "description": "Backend Intern",
+        "quantity": null,
+        "unit_price": null,
+        "total": 16700.0
+      }
+    ],
+    "subtotal": 16700.0,
+    "tax": null,
+    "total": 16700.0,
+    "payment_terms": null,
+    "due_date": "2025-07-06",
+    "source_file": "naman nagi invoice (1).pdf"
+  }
+]
