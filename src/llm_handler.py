@@ -31,7 +31,9 @@ class LLMHandler:
             temperature=settings.TEMPERATURE,
             max_tokens=settings.MAX_TOKENS,
         )
-        self.embeddings = OpenAIEmbeddings(openai_api_key=settings.OPENAI_API_KEY)
+        self.embeddings = OpenAIEmbeddings(
+            openai_api_key=settings.OPENAI_API_KEY
+        )
 
         # ──── PLACEHOLDERS ───────────────────────────────────────────────────────
         self.vectorstore: Optional[Chroma] = None
@@ -55,6 +57,7 @@ class LLMHandler:
 
         resp = self.llm([system, user])
         json_str = resp.strip()
+        # strip ```json … ``` if present
         if json_str.startswith("```json"):
             json_str = json_str[7:]
         if json_str.endswith("```"):
