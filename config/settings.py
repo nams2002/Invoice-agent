@@ -2,7 +2,7 @@ import streamlit as st
 
 class Settings:
     # API Keys
-    OPENAI_API_KEY = st.secrets("OPENAI_API_KEY")
+    OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
     
     # OpenAI Settings
     OPENAI_MODEL = "gpt-4o-mini"
