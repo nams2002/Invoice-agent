@@ -19,6 +19,7 @@ class LLMHandler:
         # ──── OPENAI / PROXY SETUP ────────────────────────────────────────────────
         openai.api_key = settings.OPENAI_API_KEY
 
+        # optional single‐URL proxy
         proxy = getattr(settings, "OPENAI_PROXY", None)
         if proxy:
             os.environ["HTTP_PROXY"] = proxy
@@ -26,7 +27,7 @@ class LLMHandler:
 
         # ──── LLM & EMBEDDINGS ───────────────────────────────────────────────────
         self.llm = ChatOpenAI(
-            model_name=settings.OPENAI_MODEL,
+            model=settings.OPENAI_MODEL,
             temperature=settings.TEMPERATURE,
             model_kwargs={"max_tokens": settings.MAX_TOKENS},
             openai_proxy=proxy,
