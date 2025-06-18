@@ -16,16 +16,17 @@ from config.settings import settings
 
 class LLMHandler:
     def __init__(self):
-        # ──── OPENAI / PROXY SETUP ────────────────────────────────────────────────
+        # ──── OPENAI KEY & OPTIONAL PROXY ─────────────────────────────────────────
         openai.api_key = settings.OPENAI_API_KEY
 
-        # If you set OPENAI_PROXY in settings, route through it via env-vars
+        # If you’ve set OPENAI_PROXY in your settings (or secrets),
+        # export it so that the underlying HTTP client picks it up.
         proxy = getattr(settings, "OPENAI_PROXY", None)
         if proxy:
-            os.environ["HTTP_PROXY"] = proxy
+            os.environ["HTTP_PROXY"]  = proxy
             os.environ["HTTPS_PROXY"] = proxy
 
-        # ──── LLM & EMBEDDINGS ───────────────────────────────────────────────────
+        # ──── INITIALIZE LLM & EMBEDDINGS ────────────────────────────────────────
         self.llm = ChatOpenAI(
             model=settings.OPENAI_MODEL,
             temperature=settings.TEMPERATURE,
@@ -35,29 +36,31 @@ class LLMHandler:
             openai_api_key=settings.OPENAI_API_KEY
         )
 
-        # ──── PLACEHOLDERS ───────────────────────────────────────────────────────
+        # ──── PLACEHOLDERS FOR VECTORSTORE + QA CHAIN ────────────────────────────
         self.vectorstore: Optional[Chroma] = None
-        self.qa_chain: Optional[ConversationalRetrievalChain] = None
+        self.qa_chain:   Optional[ConversationalRetrievalChain] = None
 
 
     def extract_structured_data(self, text: str, file_name: str) -> Dict:
-        """Extract structured data from invoice text via ChatOpenAI → JSON."""
+        """Extract structured JSON from raw invoice text."""
         system = {
-            "role": "system",
+            "role":    "system",
             "content": "You are an expert invoice data extractor. Always return valid JSON."
         }
         user = {
-            "role": "user",
+            "role":    "user",
             "content": (
-                f"Extract the following fields from the invoice below, returning only valid JSON "
+                f"Extract the following fields from this invoice, returning _only_ valid JSON "
                 f"matching this schema:\n{json.dumps(settings.INVOICE_SCHEMA, indent=2)}\n\n"
-                f"Invoice Text:\n{text}\n\nJSON Output:"
+                f"Invoice Text:\n{text}\n\n"
+                f"JSON Output:"
             )
         }
 
         resp = self.llm([system, user])
         json_str = resp.strip()
-        # strip ```json … ``` if present
+
+        # strip ```json fences if present
         if json_str.startswith("```json"):
             json_str = json_str[7:]
         if json_str.endswith("```"):
@@ -67,9 +70,9 @@ class LLMHandler:
             data = json.loads(json_str)
         except json.JSONDecodeError as e:
             return {
-                "error": f"JSON parse error: {e}",
+                "error":        f"JSON parse error: {e}",
                 "raw_response": resp,
-                "source_file": file_name
+                "source_file":  file_name
             }
 
         data["source_file"] = file_name
@@ -77,8 +80,8 @@ class LLMHandler:
 
 
     def create_vector_store(self, documents: List[Dict]) -> None:
-        """Split texts → Chroma embeddings → build a ConversationalRetrievalChain."""
-        texts: List[str] = []
+        """Chunk texts, embed with Chroma, and build a QA chain."""
+        texts:     List[str] = []
         metadatas: List[Dict] = []
         splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
 
@@ -87,7 +90,7 @@ class LLMHandler:
             for chunk in splitter.split_text(raw):
                 texts.append(chunk)
                 metadatas.append({
-                    "source": doc["file_name"],
+                    "source":    doc["file_name"],
                     "file_path": doc.get("file_path", "")
                 })
 
@@ -108,7 +111,7 @@ class LLMHandler:
 
 
     def query_invoices(self, question: str) -> Dict:
-        """Ask your QA chain a question (stateless)."""
+        """Run a stateless QA query against the processed invoices."""
         if not self.qa_chain:
             return {
                 "answer": "No invoices processed yet. Please upload & process first.",
@@ -117,7 +120,7 @@ class LLMHandler:
 
         result = self.qa_chain({"question": question, "chat_history": []})
         answer = result.get("answer", "")
-        docs = result.get("source_documents", [])
+        docs   = result.get("source_documents", [])
 
         sources: List[str] = []
         for d in docs:
@@ -129,7 +132,7 @@ class LLMHandler:
 
 
     def analyze_invoices(self, structured_data: List[Dict]) -> Dict:
-        """High-level analysis over a batch of invoices."""
+        """Produce aggregate insights over multiple invoices."""
         if not structured_data:
             return {"error": "No structured data available"}
 
@@ -141,10 +144,14 @@ class LLMHandler:
             "4. Top vendors by frequency\n"
             "5. Date range covered\n"
             "6. Any detected anomalies or patterns\n\n"
-            f"Data:\n{json.dumps(structured_data, indent=2)}\n\nAnalysis:"
+            f"Data:\n{json.dumps(structured_data, indent=2)}\n\n"
+            "Analysis:"
         )
         resp = self.llm([
             {"role": "system", "content": "You are a financial analyst."},
             {"role": "user",   "content": prompt}
         ])
-        return {"analysis": resp, "invoice_count": len(structured_data)}
+        return {
+            "analysis":      resp,
+            "invoice_count": len(structured_data),
+        }
