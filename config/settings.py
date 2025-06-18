@@ -1,11 +1,11 @@
 import os
 from dotenv import load_dotenv
-
+import streamlit as st
 load_dotenv()
 
 class Settings:
     # API Keys
-    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+    OPENAI_API_KEY = st.secrets("OPENAI_API_KEY")
     
     # OpenAI Settings
     OPENAI_MODEL = "gpt-4-turbo-preview"
