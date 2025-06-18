@@ -1,3 +1,5 @@
+# src/llm_handler.py
+
 from typing import Dict, List, Optional
 import os
 import json
@@ -16,21 +18,18 @@ class LLMHandler:
     def __init__(self):
         # ──── OPENAI / PROXY SETUP ────────────────────────────────────────────────
         openai.api_key = settings.OPENAI_API_KEY
-        
-        # If you have a single‐URL proxy, LangChain can pick it up:
-        #    HTTP_PROXY / HTTPS_PROXY
-        # or openai_proxy="http://user:pw@proxy:port"
-        if settings.OPENAI_PROXY:
-            # for direct openai.<…> calls
-            os.environ["HTTP_PROXY"] = settings.OPENAI_PROXY
-            os.environ["HTTPS_PROXY"] = settings.OPENAI_PROXY
+
+        proxy = getattr(settings, "OPENAI_PROXY", None)
+        if proxy:
+            os.environ["HTTP_PROXY"] = proxy
+            os.environ["HTTPS_PROXY"] = proxy
 
         # ──── LLM & EMBEDDINGS ───────────────────────────────────────────────────
         self.llm = ChatOpenAI(
             model_name=settings.OPENAI_MODEL,
             temperature=settings.TEMPERATURE,
-            max_tokens=settings.MAX_TOKENS,
-            openai_proxy=settings.OPENAI_PROXY or None,
+            model_kwargs={"max_tokens": settings.MAX_TOKENS},
+            openai_proxy=proxy,
         )
         self.embeddings = OpenAIEmbeddings(
             openai_api_key=settings.OPENAI_API_KEY
@@ -50,8 +49,8 @@ class LLMHandler:
         user = {
             "role": "user",
             "content": (
-                f"Extract the following fields from the invoice below, returning _only_ "
-                f"valid JSON matching this schema:\n{json.dumps(settings.INVOICE_SCHEMA, indent=2)}\n\n"
+                f"Extract the following fields from the invoice below, returning only valid JSON "
+                f"matching this schema:\n{json.dumps(settings.INVOICE_SCHEMA, indent=2)}\n\n"
                 f"Invoice Text:\n{text}\n\nJSON Output:"
             )
         }
@@ -81,8 +80,8 @@ class LLMHandler:
         """Split texts → Chroma embeddings → build a ConversationalRetrievalChain."""
         texts: List[str] = []
         metadatas: List[Dict] = []
-
         splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+
         for doc in documents:
             raw = doc.get("raw_text") or ""
             for chunk in splitter.split_text(raw):
@@ -120,7 +119,7 @@ class LLMHandler:
         answer = result.get("answer", "")
         docs = result.get("source_documents", [])
 
-        sources = []
+        sources: List[str] = []
         for d in docs:
             src = d.metadata.get("source")
             if src and src not in sources:
@@ -135,8 +134,7 @@ class LLMHandler:
             return {"error": "No structured data available"}
 
         prompt = (
-            "You are a financial analyst. Given this list of invoices (JSON), "
-            "please provide:\n"
+            "You are a financial analyst. Given this list of invoices (JSON), please provide:\n"
             "1. Total number of invoices\n"
             "2. Sum of all invoice totals\n"
             "3. Average invoice amount\n"
@@ -146,7 +144,7 @@ class LLMHandler:
             f"Data:\n{json.dumps(structured_data, indent=2)}\n\nAnalysis:"
         )
         resp = self.llm([
-            {"role": "system",  "content": "You are a financial analyst."},
-            {"role": "user",    "content": prompt}
+            {"role": "system", "content": "You are a financial analyst."},
+            {"role": "user",   "content": prompt}
         ])
         return {"analysis": resp, "invoice_count": len(structured_data)}
