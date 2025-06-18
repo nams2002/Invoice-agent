@@ -22,7 +22,7 @@ class LLMHandler:
     def __init__(self):
         openai.api_key = settings.OPENAI_API_KEY
 
-        # 1) Initialize the Chat model
+        
         self.llm = ChatOpenAI(
         model=settings.OPENAI_MODEL,
         temperature=settings.TEMPERATURE,
