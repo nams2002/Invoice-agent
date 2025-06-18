@@ -29,7 +29,7 @@ class LLMHandler:
         self.llm = ChatOpenAI(
             model=settings.OPENAI_MODEL,
             temperature=settings.TEMPERATURE,
-            model_kwargs={"max_tokens": settings.MAX_TOKENS},
+            max_tokens=settings.MAX_TOKENS,
         )
         self.embeddings = OpenAIEmbeddings(openai_api_key=settings.OPENAI_API_KEY)
 
