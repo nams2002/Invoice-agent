@@ -4,6 +4,10 @@ class Settings:
     # API Keys
     OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
     
+    # Optional HTTP proxy for both OpenAI SDK and LangChain
+    # ––– add this line –––
+    OPENAI_PROXY = st.secrets.get("OPENAI_PROXY", None)
+    
     # OpenAI Settings
     OPENAI_MODEL = "gpt-4o-mini"
     TEMPERATURE = 0.1
