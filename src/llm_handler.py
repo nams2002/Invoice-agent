@@ -24,10 +24,10 @@ class LLMHandler:
 
         # 1) Initialize the Chat model
         self.llm = ChatOpenAI(
-            model_name=settings.OPENAI_MODEL,
-            temperature=settings.TEMPERATURE,
-            max_tokens=settings.MAX_TOKENS,
-        )
+        model=settings.OPENAI_MODEL,
+        temperature=settings.TEMPERATURE,
+        max_tokens=settings.MAX_TOKENS,
+    )
 
         # 2) Initialize embeddings
         self.embeddings = OpenAIEmbeddings()
