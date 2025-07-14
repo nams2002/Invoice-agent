@@ -20,10 +20,11 @@ class LLMHandler:
 
         # If you’ve set OPENAI_PROXY in your settings (or secrets),
         # export it so that the underlying HTTP client picks it up.
-        proxy = getattr(settings, "OPENAI_PROXY", None)
-        if proxy:
-            os.environ["HTTP_PROXY"]  = proxy
-            os.environ["HTTPS_PROXY"] = proxy
+        # Proxy configuration temporarily disabled for Streamlit Cloud compatibility
+        # proxy = getattr(settings, "OPENAI_PROXY", None)
+        # if proxy:
+        #     os.environ["HTTP_PROXY"]  = proxy
+        #     os.environ["HTTPS_PROXY"] = proxy
 
         # ──── INITIALIZE LLM & EMBEDDINGS ────────────────────────────────────────
         self.llm = ChatOpenAI(
