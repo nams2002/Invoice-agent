@@ -30,6 +30,7 @@ class LLMHandler:
             model=settings.OPENAI_MODEL,
             temperature=settings.TEMPERATURE,
             max_tokens=settings.MAX_TOKENS,
+            openai_api_key=settings.OPENAI_API_KEY
         )
         self.embeddings = OpenAIEmbeddings(
             openai_api_key=settings.OPENAI_API_KEY
