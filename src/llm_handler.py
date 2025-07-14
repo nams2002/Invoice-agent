@@ -5,9 +5,8 @@ import os
 import json
 
 import openai
-from langchain.chat_models import ChatOpenAI
-from langchain.embeddings.openai import OpenAIEmbeddings
-from langchain.vectorstores import Chroma
+from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from langchain_community.vectorstores import Chroma
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.chains import ConversationalRetrievalChain
 
@@ -57,8 +56,8 @@ class LLMHandler:
             )
         }
 
-        resp = self.llm([system, user])
-        json_str = resp.strip()
+        resp = self.llm.invoke([system, user])
+        json_str = resp.content.strip()
 
         # strip ```json fences if present
         if json_str.startswith("```json"):
@@ -71,7 +70,7 @@ class LLMHandler:
         except json.JSONDecodeError as e:
             return {
                 "error":        f"JSON parse error: {e}",
-                "raw_response": resp,
+                "raw_response": resp.content,
                 "source_file":  file_name
             }
 
@@ -147,11 +146,11 @@ class LLMHandler:
             f"Data:\n{json.dumps(structured_data, indent=2)}\n\n"
             "Analysis:"
         )
-        resp = self.llm([
+        resp = self.llm.invoke([
             {"role": "system", "content": "You are a financial analyst."},
             {"role": "user",   "content": prompt}
         ])
         return {
-            "analysis":      resp,
+            "analysis":      resp.content,
             "invoice_count": len(structured_data),
         }
