@@ -5,8 +5,9 @@ import os
 import json
 
 import openai
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
-from langchain_community.vectorstores import Chroma
+from langchain.llms import OpenAI
+from langchain.embeddings import OpenAIEmbeddings
+from langchain.vectorstores import Chroma
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.chains import ConversationalRetrievalChain
 
@@ -27,8 +28,8 @@ class LLMHandler:
         #     os.environ["HTTPS_PROXY"] = proxy
 
         # ──── INITIALIZE LLM & EMBEDDINGS ────────────────────────────────────────
-        self.llm = ChatOpenAI(
-            model=settings.OPENAI_MODEL,
+        self.llm = OpenAI(
+            model_name=settings.OPENAI_MODEL,
             temperature=settings.TEMPERATURE,
             max_tokens=settings.MAX_TOKENS,
             openai_api_key=settings.OPENAI_API_KEY
